@@ -20,10 +20,11 @@ linkList initLinkListWithHead()
 {
     Lnode *L = (linkList)malloc(sizeof(Lnode));
     L->next = NULL;
+    L->data = 9999999;
     return L;
 }
 
-status headInsertCreatList(linkList *L)
+status headInsertCreatList(linkList L)
 {
     int data;
     while (1)
@@ -32,19 +33,19 @@ status headInsertCreatList(linkList *L)
         scanf("%d", &data);
         if (data == 999)
         {
-            break;
+            return 1;
         }
-        Lnode *L1 = (Lnode *)malloc(sizeof(Lnode));
-        L1->data = data;
-        L1->next = (*L)->next;
-        (*L)->next = L1;
-        return 1;
+        Lnode *node = (Lnode *)malloc(sizeof(Lnode));
+        node->data = data;
+        node->next = L->next;
+        L->next = node;
     }
+    return 1;
 }
 
-status tailInsertCreatList(linkList *L) //尾插法建表
+status tailInsertCreatList(linkList L) //尾插法建表
 {
-    Lnode *r = *L;
+    Lnode *r = L;
     int data;
     while (1)
     {
@@ -54,19 +55,26 @@ status tailInsertCreatList(linkList *L) //尾插法建表
         {
             break;
         }
-        Lnode *temp = (Lnode *)malloc(sizeof(elemType));
-        r->next = temp;
-        temp->data = data;
-        r = temp;
+        Lnode *node = (Lnode *)malloc(sizeof(elemType));
+        r->next = node;
+        node->data = data;
+        r = node;
         r->next = NULL;
     }
     return 1;
 }
 
+linkList creatLinkListWithoutHeadNode() //用来写题目的😁
+{
+    linkList L = initLinkListWithHead();
+    tailInsertCreatList(L);
+    *&L = *&L->next;
+}
+
 status linkListTraverse(linkList L) //遍历输出
 {
     printf("链表数据:");
-    if (L->data) //处理不带头节点
+    if (L->data != 9999999) //处理不带头节点
     {
         printf("%d ", L->data);
     }
@@ -81,16 +89,15 @@ status linkListTraverse(linkList L) //遍历输出
 
 Lnode *getElemByPosition(int position, linkList L) //按位置查找
 {
-    Lnode *p = L;
     for (int i = 0; i < position; i++)
     {
-        p = p->next;
-        if (p == NULL)
+        L = L->next;
+        if (L == NULL)
         {
             return NULL;
         }
     }
-    return p;
+    return L;
 }
 
 int getElemByData(elemType data, linkList L) //按值查找
@@ -108,33 +115,26 @@ int getElemByData(elemType data, linkList L) //按值查找
     return 0;
 }
 
-status insertLnode(Lnode *L1, int position, linkList *L)
+status insertLnode(Lnode *node, int position, linkList L)
 {
-    Lnode *s = *L;
     if (position < 1)
     {
         printf("插入位置需大于0!!\n");
         return 0;
     }
-    else
+
+    L = getElemByPosition(position - 1, L);
+    if (!L)
     {
-        Lnode *temp = getElemByPosition(position - 1, *L);
-        if (temp)
-        {
-            s = temp;
-        }
-        else
-        {
-            printf("插入位置过大！！！\n");
-        }
+        printf("插入位置过大！！！\n");
     }
-    L1->next = s->next;
-    s->next = L1;
+    node->next = L->next;
+    L->next = node;
 }
 
-status deleteLnodeByPosition(int count, linkList *L)
+status deleteLnodeByPosition(int count, linkList L)
 {
-    if ((*L)->next == NULL)
+    if (L->next == NULL)
     {
         return 0;
     }
@@ -146,18 +146,17 @@ status deleteLnodeByPosition(int count, linkList *L)
     }
     else
     {
-        Lnode *temp = *L;
         while (count - 1 > 0)
         {
-            temp = temp->next;
+            L = L->next;
             count--;
-            if (temp->next == NULL)
+            if (L->next == NULL)
             {
                 printf("删除位置大于链表现有长度\n");
                 return 0;
             }
         }
-        temp->next = temp->next->next;
+        L->next = L->next->next;
         return 1;
     }
 }
@@ -165,6 +164,11 @@ status deleteLnodeByPosition(int count, linkList *L)
 int len(linkList L)
 {
     int count = 0;
+    if (L->data != 9999999) //处理不带头节点
+    {
+        count++;
+    }
+
     while (L->next)
     {
         L = L->next;
@@ -173,20 +177,87 @@ int len(linkList L)
     return count;
 }
 
+status deletAllXWithoutHead(elemType x, linkList L) //递归删除带头节点所有值为x的节点(p37_1)
+{
+    if (L->next == NULL)
+    {
+        return 1;
+    }
+    if (L->data == x)
+    {
+        Lnode *p = L;
+        L = L->next;
+        free(p);
+    }
+    else
+    {
+        deletAllXWithoutHead(x, L->next);
+    }
+}
+
+status deletAllX(elemType x, linkList L) //递归删除所有值为x的节点(p37_2)
+{
+
+    deletAllXWithoutHead(x, L); //不是一样吗
+}
+
+void reverseTraverse(linkList L) //反向输出(p38_3)
+{
+    linkList L_temp = initLinkListWithHead();
+    while (L->next != NULL)
+    {
+        L = L->next;
+        Lnode *node_temp = (Lnode *)malloc(sizeof(elemType));
+        node_temp->data = L->data;
+        node_temp->next = NULL;
+        insertLnode(node_temp, 1, L_temp);
+    }
+    linkListTraverse(L_temp);
+}
+
+status deletMin(linkList L) //删除最小节点(p38_4)
+{
+    if (L->next == NULL)
+    {
+        return 0;
+    }
+    Lnode *node = L;
+    Lnode *node_min_pre = L;
+    Lnode *node_min = L->next;
+    L = L->next;
+    while (L->next)
+    {
+        node = L;
+        L = L->next;
+        if (L->data < node_min->data)
+        {
+            node_min_pre = node;
+            node_min = L;
+        }
+    }
+    node_min_pre->next = node_min->next;
+    free(node_min);
+}
+
 int main(int argc, char const *argv[])
 {
     linkList L = initLinkListWithHead();
-    // headInsertCreatList(&L);
-    tailInsertCreatList(&L);
-    linkListTraverse(L);
-    // Lnode *node = (Lnode *)malloc(sizeof(elemType));
-    // node->data = 999;
-    // node->next == NULL;
-    // insertLnode(node, 4, &L);
+    // linkList L1 = creatLinkListWithoutHeadNode();
+    headInsertCreatList(L);
+    // tailInsertCreatList(L);
+    // linkListTraverse(L);
+    Lnode *node = (Lnode *)malloc(sizeof(elemType));
+    node->data = 999;
+    node->next == NULL;
+    insertLnode(node, 4, L);
     // printf("%d",getElemByPosition(4,L)->data);
     // printf("%d", getElemByData(4, L));
-    deleteLnodeByPosition(6, &L);
-    printf("长度：%d\n", len(L));
+    deleteLnodeByPosition(3, L);
+    // deletAllX(1, L);
+    // printf("长度：%d\n", len(L));
+    linkListTraverse(L);
+    reverseTraverse(L);
+    deletMin(L);
     linkListTraverse(L);
     return 0;
 }

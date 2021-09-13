@@ -127,8 +127,8 @@ status invert_List(SqList *L) //逆置所有元素(p17_2)
     return 1;
 }
 
-status deletAllX(elemType x, SqList *L)
-{ //删除所有值为x的元素(p17_3)
+status deletAllX(elemType x, SqList *L) //删除所有值为x的元素(p17_3)
+{ 
     for (int i = 0; i < L->len; i++)
     {
         if (L->data[i] == x)
